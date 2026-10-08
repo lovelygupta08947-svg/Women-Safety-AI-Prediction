@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Dashboard | WomenSafe AI</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<nav class="navbar"><a class="brand" href="/">🛡️ WomenSafe AI</a><div class="navlinks"><a href="/">Predict</a><a href="/map">Map</a><a href="/analytics">Analytics</a><a href="/logout">Logout</a></div></nav>
+<main class="page narrow">
+<section class="page-head"><span class="badge">ADMIN DASHBOARD</span><h1>Prediction Records</h1><p>Review the current sample dataset and model classifications.</p></section>
+<div class="table-card"><table><thead><tr><th>Area</th><th>Risk</th><th>Safety Score</th><th>Latitude</th><th>Longitude</th></tr></thead><tbody>
+{% for r in records %}<tr><td>{{ r.area }}</td><td><span class="pill {{ r.risk|lower }}">{{ r.risk }}</span></td><td>{{ r.score }}/100</td><td>{{ r.lat }}</td><td>{{ r.lng }}</td></tr>{% endfor %}
+</tbody></table></div>
+</main></body></html>

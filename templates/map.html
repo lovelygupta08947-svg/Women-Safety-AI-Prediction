@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Safety Map | WomenSafe AI</title>
+<link rel="stylesheet" href="{{url_for('static',filename='style.css')}}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></head>
+<body>
+<nav class="navbar"><a class="brand" href="/">🛡️ WomenSafe AI</a><div class="navlinks"><a href="/">Predict</a><a href="/map">Safety Map</a><a href="/analytics">Analytics</a><a href="/emergency">Emergency</a><a href="/login">Admin</a></div></nav>
+<main class="page narrow"><section class="page-head"><span class="badge">LOCATION INTELLIGENCE</span><h1>Interactive Safety Map</h1><p>Compare predicted risk across multiple cities and locate your nearest demo area.</p></section>
+<div class="map-tools"><select id="cityFilter" onchange="filterCity()"><option value="">All Cities</option>{% for c in map_data|map(attribute='city')|unique|sort %}<option>{{c}}</option>{% endfor %}</select>
+<input id="search" placeholder="Search area or city..." oninput="filterAreas()"><button class="small-btn" onclick="locateMe()">📍 Use My Location</button></div>
+<div class="map-actions"><button class="small-btn secondary" onclick="toggleServices()">🚨 Support Points</button><button class="small-btn secondary" onclick="fitAll()">🗺️ Show All</button></div>
+<div id="fullMap"></div><div class="legend big"><span>🟢 Low</span><span>🟡 Medium</span><span>🔴 High</span><span>🔵 Support</span></div>
+<h2 class="subhead">Area Results</h2><div id="areaCards" class="area-cards"></div>
+<p id="nearest" class="notice" style="display:none"></p>
+<p class="disclaimer">Academic/demo data and approximate support points are used here. Verify official information before real-world use.</p></main>
+<footer>WomenSafe AI • Academic Demonstration</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const data={{map_data|tojson}}, services={{services|tojson}};
+const map=L.map('fullMap').setView([26.8467,80.9462],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+const colors={Low:'#22c55e',Medium:'#f59e0b',High:'#ef4444'};
+let markers=[], zones=[], serviceLayer=L.layerGroup().addTo(map), userMarker=null;
+function render(arr){markers.forEach(m=>map.removeLayer(m));zones.forEach(m=>map.removeLayer(m));markers=[];zones=[];
+arr.forEach(x=>{let m=L.circleMarker([x.lat,x.lng],{radius:10,color:colors[x.risk],fillColor:colors[x.risk],fillOpacity:.8,weight:2}).addTo(map);
+m.bindPopup('<b>'+x.area+'</b><br>'+x.city+'<br>Risk: <b>'+x.risk+'</b><br>Safety Score: '+x.score+'/100');markers.push(m);
+let radius=x.risk==='High'?900:x.risk==='Medium'?650:450;
+zones.push(L.circle([x.lat,x.lng],{radius,color:colors[x.risk],fillColor:colors[x.risk],fillOpacity:.07,weight:1}).addTo(map));});}
+function cards(arr){document.getElementById('areaCards').innerHTML=arr.map(x=>'<button class="area-card" onclick="focusArea('+x.lat+','+x.lng+')"><b>'+x.area+'</b><span>'+x.city+' • '+x.risk+' • '+x.score+'/100</span></button>').join('');}
+function focusArea(lat,lng){map.setView([lat,lng],14);let i=data.findIndex(x=>x.lat===lat&&x.lng===lng);if(i>=0&&markers[i])markers[i].openPopup();}
+function filtered(){let q=document.getElementById('search').value.toLowerCase(),c=document.getElementById('cityFilter').value;return data.filter(x=>(!c||x.city===c)&&(!q||x.area.toLowerCase().includes(q)||x.city.toLowerCase().includes(q)));}
+function filterAreas(){let a=filtered();render(a);cards(a);}
+function filterCity(){filterAreas();let a=filtered();if(a.length)map.fitBounds(a.map(x=>[x.lat,x.lng]),{padding:[30,30]});}
+function fitAll(){map.fitBounds(data.map(x=>[x.lat,x.lng]),{padding:[30,30]});}
+function toggleServices(){if(map.hasLayer(serviceLayer))map.removeLayer(serviceLayer);else serviceLayer.addTo(map);}
+services.forEach(s=>L.marker([s.lat,s.lng]).bindPopup('<b>🔵 '+s.name+'</b><br>'+s.type+'<br>Phone: '+s.phone).addTo(serviceLayer));
+function locateMe(){if(!navigator.geolocation){alert('Geolocation is not supported.');return}navigator.geolocation.getCurrentPosition(p=>{let lat=p.coords.latitude,lng=p.coords.longitude;if(userMarker)map.removeLayer(userMarker);userMarker=L.marker([lat,lng]).addTo(map).bindPopup('📍 Your browser location').openPopup();map.setView([lat,lng],13);
+let near=data.map(x=>({...x,d:Math.hypot((x.lat-lat)*111,(x.lng-lng)*111)})).sort((a,b)=>a.d-b.d)[0];
+let box=document.getElementById('nearest');box.style.display='block';box.innerHTML='Nearest demo area: <b>'+near.area+', '+near.city+'</b> — Risk <b>'+near.risk+'</b>, Safety Score <b>'+near.score+'/100</b>.';},()=>alert('Please allow location permission in Chrome.'))}
+render(data);cards(data);fitAll();
+</script></body></html>

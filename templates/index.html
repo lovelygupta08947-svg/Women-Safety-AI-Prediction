@@ -1,0 +1,144 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WomenSafe AI | All India</title><link rel="stylesheet" href="{{url_for('static',filename='style.css')}}"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></head>
+<body><nav class="navbar"><a class="brand" href="/">🛡️ WomenSafe AI</a><div class="navlinks"><a href="/">Predict</a><a href="/map">Safety Map</a><a href="/analytics">Analytics</a><a href="/emergency">Emergency</a><a href="/login">Admin</a></div></nav>
+<div class="announcement"><span>✨</span><b>WomenSafe AI</b><span>•</span><span>Smart location search, time-aware risk and AI safety guidance</span><a href="#smart">Try AI Assistant ↓</a></div>
+<main class="page"><section class="hero"><div class="hero-text"><span class="badge">AI + MACHINE LEARNING • ALL INDIA</span><h1>Women Safety<br><span>Area Prediction</span></h1><p>Search an Indian city and any locality/area. The app uses OpenStreetMap for location lookup and the academic ML model for a clearly labelled demo estimate when verified crime data is unavailable.</p><div class="hero-buttons"><a class="outline-btn" href="/map">🗺️ Explore Safety Map</a><a class="outline-btn" href="/analytics">📊 View Analytics</a></div></div>
+<div class="prediction-card"><h2>Check Any Indian Area</h2><p class="muted">You do not need to manually add every city. Search any Indian city/locality.</p>
+<form action="/predict" method="POST"><label>State / Union Territory</label><select id="state" name="state"><option value="">Select State / UT</option>{% for st in states %}<option value="{{st}}">{{st}}</option>{% endfor %}</select>
+<label>District</label><input id="district" name="district" list="districtList" placeholder="e.g. Lucknow, Mumbai Suburban"><datalist id="districtList"></datalist>
+<label>Town / City</label><input id="city" name="city" list="cityList" placeholder="e.g. Lucknow, Mumbai, Delhi" required><datalist id="cityList">{% for c in cities %}<option value="{{c}}">{% endfor %}</datalist>
+<label>Area / Locality</label><input id="area" name="area" list="areaList" placeholder="e.g. Gomti Nagar, Andheri West" required><datalist id="areaList">{% for a in areas %}<option value="{{a}}">{% endfor %}</datalist>
+<div class="form-row"><div style="flex:1"><label>Town / Village (optional)</label><input id="village" name="village" placeholder="Town / Village / Neighbourhood"></div><div style="flex:1"><label>Pincode (optional)</label><input id="postcode" name="postcode" inputmode="numeric" placeholder="6-digit PIN"></div></div>
+<button type="submit">🔍 Search & Predict</button></form><p class="tiny">Enter as many location details as you know. After search, the result shows the geocoded State, District, Town/City, Area, Village/Neighbourhood and PIN when OpenStreetMap provides them.</p></div></section>
+<section class="hero-stats">
+  <div class="hero-stat"><div class="hero-stat-icon">🇮🇳</div><div><b>Pan-India</b><span>State • District • City • Area</span></div></div>
+  <div class="hero-stat"><div class="hero-stat-icon">🤖</div><div><b>AI Assisted</b><span>Smart safety guidance</span></div></div>
+  <div class="hero-stat"><div class="hero-stat-icon">🕒</div><div><b>Time-Aware</b><span>Risk by time of day</span></div></div>
+  <div class="hero-stat"><div class="hero-stat-icon">📍</div><div><b>Map Connected</b><span>Location & nearby support</span></div></div>
+</section>
+
+<section class="trust-strip">
+  <div><strong>🤖 ML Powered</strong><span>Random Forest prediction pipeline</span></div>
+  <div><strong>📍 Map Based</strong><span>OpenStreetMap location lookup</span></div>
+  <div><strong>🛡️ Safety First</strong><span>Recommendations & emergency support</span></div>
+  <div><strong>🇮🇳 Pan-India</strong><span>Search cities and localities</span></div>
+</section>
+{% if result %}<section class="result-section"><div class="result-heading"><span class="badge">PREDICTION RESULT</span><h2>{{area}}, {{city}}</h2>{% if verified_demo %}<p class="notice">⚠️ <b>Academic Demo Estimate:</b> this location was found through the map/geocoder, but the displayed risk features are synthetic. They are not official crime statistics.</p>{% else %}<p class="notice">ℹ️ <b>Academic Training/Demo Data:</b> this area is represented in the project dataset. The model indicators below are not official locality-level crime counts.</p>{% endif %}</div>
+{% if location_details %}<div class="location-details-card"><div><span class="badge">LOCATION DETAILS</span><h3>📍 Full location information</h3></div><div class="location-detail-grid"><div><span>State / UT</span><b>{{location_details.state or "Not available"}}</b></div><div><span>District</span><b>{{location_details.district or "Not available"}}</b></div><div><span>Town / City</span><b>{{location_details.town or city or "Not available"}}</b></div><div><span>Area / Locality</span><b>{{location_details.area or area or "Not available"}}</b></div><div><span>Village / Neighbourhood</span><b>{{location_details.village or "Not available"}}</b></div><div><span>PIN Code</span><b>{{location_details.postcode or "Not available"}}</b></div></div><p class="tiny">Source: OpenStreetMap address/geocoding data. Missing fields mean the source did not return that detail.</p></div>{% endif %}
+<div class="result-grid"><div class="score-card"><div class="score">{{safety_score}}</div><div class="score-label">Safety Score / 100</div></div><div class="risk-card"><div class="risk-icon">{% if risk_level=="Low" %}🟢{% elif risk_level=="Medium" %}🟡{% else %}🔴{% endif %}</div><div><div class="small-label">Predicted Risk</div><div class="risk-value">{{risk_level}}</div></div></div><div class="stat-card"><div class="stat-number">{{crime_frequency}}</div><div class="stat-label">Crime Frequency*</div></div><div class="stat-card"><div class="stat-number">{{night_crime_rate}}</div><div class="stat-label">Night Crime Rate*</div></div></div>
+<div class="mini-grid"><div class="mini-stat"><b>{{harassment_cases}}</b><span>Harassment Cases*</span></div><div class="mini-stat"><b>{{assault_cases}}</b><span>Assault Cases*</span></div></div><div class="recommendations"><h3>🧭 Safety Recommendations</h3><ul>{% for x in recommendations %}<li>{{x}}</li>{% endfor %}</ul></div>
+<div class="crime-intel-card">
+  <div class="crime-intel-head">
+    <div><span class="badge">CRIME & SAFETY INTELLIGENCE</span><h3>🔎 Detailed risk factors for this location</h3>
+      <p class="muted">Separate official crime counts from academic model indicators. Exact neighbourhood-level counts are shown only when a verified source provides them.</p></div>
+    <div class="data-freshness"><span>Latest official catalogue</span><b>NCRB CII {{ crime_detail.official_year if crime_detail else '2024' }}</b></div>
+  </div>
+  <div class="crime-grid">
+    {% if crime_detail %}{% for c in crime_detail.categories %}
+    <div class="crime-item {% if c.value is none %}unavailable{% endif %}">
+      <div class="crime-icon">{{c.icon}}</div>
+      <div class="crime-main"><b>{{c.name}}</b><span>{{c.status}}</span></div>
+      <div class="crime-value">{% if c.value is not none %}<strong>{{c.value}}</strong><small>{{c.unit}}</small>{% else %}<strong>—</strong><small>Not available</small>{% endif %}</div>
+      <div class="crime-risk">{{c.risk}}</div>
+    </div>
+    {% endfor %}{% endif %}
+  </div>
+  {% if crime_detail %}<div class="source-note">🧾 {{crime_detail.source_note}}</div>
+  <div class="source-links"><a href="{{crime_detail.sources.ncrb_2024}}" target="_blank" rel="noopener">NCRB / data.gov.in 2024 catalog ↗</a><a href="{{crime_detail.sources.cii_2023_women}}" target="_blank" rel="noopener">2023 women-crime dataset ↗</a><a href="{{crime_detail.sources.cii_2023_city_women}}" target="_blank" rel="noopener">2023 metro-city women-crime dataset ↗</a></div>{% endif %}
+</div>
+<div class="time-risk-card">
+  <div class="section-title"><div><span class="badge">TIME-OF-DAY ANALYSIS</span><h3>🕒 Which time is relatively riskier?</h3></div></div>
+  <p class="tiny">Academic demo estimate based partly on the area's <b>Night Crime Rate</b>. It is not an official hourly crime report.</p>
+  <div id="peakTimeBox" class="peak-time">Calculating time-of-day risk…</div>
+  <div id="timeRiskGrid" class="time-risk-grid"></div>
+</div>
+{% if lat is defined and lng is defined %}<section class="location-panel"><div class="section-title"><div><span class="badge">LIVE LOCATION LOOKUP</span><h3>📍 {{area}}, {{city}}</h3></div></div><div id="resultMap"></div><div class="nearby-grid"><div><h3>🚔 Nearby Police / Safety</h3><div id="nearbyPolice" class="nearby-list"><p class="tiny">Finding nearby locations…</p></div></div><div><h3>🏥 Nearby Medical / Emergency</h3><div id="nearbyMedical" class="nearby-list"><p class="tiny">Finding nearby locations…</p></div></div></div><p class="tiny">Nearby places are retrieved from OpenStreetMap and are for navigation/support only. Verify official details before relying on them.</p></section>{% endif %}
+<p class="tiny">* For geocoded locations outside the training dataset, these are synthetic academic-demo features used only to demonstrate the ML workflow.</p></section>{% endif %}
+<section class="how-section">
+  <div class="section-title"><div><span class="badge">HOW IT WORKS</span><h2>From location search to safety insight</h2></div></div>
+  <div class="how-grid">
+    <div class="how-card"><span>01</span><div class="how-icon">📍</div><h3>Choose location</h3><p>Select a state, district, city and area, or search a locality.</p></div>
+    <div class="how-card"><span>02</span><div class="how-icon">🧠</div><h3>Analyze</h3><p>The academic ML pipeline evaluates the available safety features.</p></div>
+    <div class="how-card"><span>03</span><div class="how-icon">🕒</div><h3>Check timing</h3><p>See the comparatively riskier time windows for the selected area.</p></div>
+    <div class="how-card"><span>04</span><div class="how-icon">🛡️</div><h3>Take action</h3><p>Get practical tips, map support and official emergency guidance.</p></div>
+  </div>
+</section>
+
+<section class="map-preview"><div class="section-title"><div><span class="badge">MULTI-CITY MAP</span><h2>Risk Overview</h2></div><a class="text-link" href="/map">Open full map →</a></div><div id="homeMap"></div><div class="legend"><span>🟢 Low</span><span>🟡 Medium</span><span>🔴 High</span></div></section>
+<section class="feature-grid"><div class="feature"><div class="feature-icon">🇮🇳</div><h3>All-India Search</h3><p>Search cities and localities across India instead of maintaining a small fixed city list.</p></div><div class="feature"><div class="feature-icon">📍</div><h3>Area Geocoding</h3><p>OpenStreetMap finds the searched locality and its coordinates.</p></div><div class="feature"><div class="feature-icon">🤖</div><h3>ML Demo Prediction</h3><p>Random Forest demonstrates the prediction pipeline for locations without verified data.</p></div><div class="feature"><div class="feature-icon">🚨</div><h3>Emergency Support</h3><p>Use official emergency services in real situations; demo support points are not guaranteed.</p></div></section></main>
+
+<section class="smart-section" id="smart">
+  <div class="section-title"><div><span class="badge">SMART SAFETY TOOLS</span><h2>AI Safety Assistant & Quick Actions</h2></div></div>
+  <div class="smart-grid">
+    <div class="assistant-card">
+      <div class="assistant-head"><div class="assistant-avatar">🤖</div><div><h3>WomenSafe AI Assistant</h3><p>Ask for safety tips, risk explanation, emergency guidance or nearby-support help.</p></div></div>
+      <div id="chatLog" class="chat-log"><div class="chat bot">Hi! I’m your safety assistant. How can I help you today?</div></div>
+      <div class="quick-chips"><button type="button" onclick="askAI('How can I stay safe at night?')">🌙 Night tips</button><button type="button" onclick="askAI('Explain my risk')">📊 Explain risk</button><button type="button" onclick="askAI('What should I do in an emergency?')">🚨 Emergency</button></div>
+      <div class="chat-input"><input id="aiMessage" placeholder="Ask WomenSafe AI…" onkeydown="if(event.key==='Enter') askAI()"><button type="button" onclick="askAI()">Send</button></div>
+    </div>
+    <div class="action-card">
+      <div class="action-title"><span>⚡</span><h3>Quick Safety Actions</h3></div>
+      <button class="action-btn sos" type="button" onclick="sosConfirm()">🚨 Emergency SOS — Call 112</button>
+      <button class="action-btn" type="button" onclick="shareSafetyPlan()">📲 Share Safety Plan</button>
+      <button class="action-btn" type="button" onclick="getMyLocation()">📍 Find My Location</button>
+      <a class="action-btn link-btn" href="/emergency">🆘 Emergency & Helplines</a>
+      <p class="tiny">SOS requires confirmation before opening the phone call. Browser location sharing also requires your permission.</p>
+    </div>
+  </div>
+</section>
+<section class="report-section">
+  <div class="report-card"><div><span class="badge">COMMUNITY REPORTING</span><h2>Report a Safety / Civic Issue</h2><p class="muted">Report a broken street light, isolated area, road issue or other concern. Reports are stored in the academic admin dashboard.</p></div>
+  <form action="/report-issue" method="POST" class="report-form"><div class="form-row"><input name="name" placeholder="Your name (optional)"><select name="category"><option>Broken Street Light</option><option>Unsafe / Isolated Area</option><option>Road / Transport Issue</option><option>Harassment Concern</option><option>Other</option></select></div><div class="form-row"><input name="city" placeholder="City"><input name="area" placeholder="Area / Locality"></div><textarea name="description" placeholder="Describe the issue…" required></textarea><button type="submit">📤 Submit Safety Report</button></form></div>
+</section>
+<section class="safety-note">
+  <div class="safety-note-icon">🛡️</div>
+  <div><h3>Designed for safer decisions</h3><p>Use this platform as an academic decision-support demo. Map locations come from OpenStreetMap. Where verified safety data is unavailable, the project labels its output as an <b>Academic Demo Estimate</b>.</p></div>
+  <a href="/emergency">Emergency help →</a>
+</section>
+<footer>WomenSafe AI • B.Tech CSE Academic Project • Location lookup: OpenStreetMap</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
+const mapData={{map_data|tojson}};const map=L.map('homeMap').setView([22.9734,78.6569],5);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);const colors={Low:'#22c55e',Medium:'#f59e0b',High:'#ef4444'};mapData.forEach(x=>{let m=L.circleMarker([x.lat,x.lng],{radius:8,color:colors[x.risk],fillColor:colors[x.risk],fillOpacity:.75}).addTo(map);m.bindPopup('<b>'+x.area+'</b><br>'+x.city+'<br>Risk: '+x.risk+'<br>Score: '+x.score+'/100')});
+{% if lat is defined and lng is defined %}
+const resultLat={{lat}};const resultLng={{lng}};const resultRisk={{risk_level|tojson}};const resultScore={{safety_score}};
+const rmap=L.map('resultMap').setView([resultLat,resultLng],14);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(rmap);
+const riskColors={Low:'#22c55e',Medium:'#f59e0b',High:'#ef4444'};L.circleMarker([resultLat,resultLng],{radius:12,color:riskColors[resultRisk],fillColor:riskColors[resultRisk],fillOpacity:.9,weight:3}).addTo(rmap).bindPopup('<b>{{area}}, {{city}}</b><br>Predicted Risk: '+resultRisk+'<br>Safety Score: '+resultScore+'/100').openPopup();
+L.circle([resultLat,resultLng],{radius:700,color:riskColors[resultRisk],fillColor:riskColors[resultRisk],fillOpacity:.08}).addTo(rmap);
+fetch('/api/nearby?lat='+encodeURIComponent(resultLat)+'&lng='+encodeURIComponent(resultLng)).then(r=>r.json()).then(payload=>{const services=payload.services||[];const police=services.filter(x=>x.type==='Police Station'||x.type==='Fire Station');const medical=services.filter(x=>x.type==='Hospital'||x.type==='Clinic');
+services.forEach(x=>{let icon=x.type==='Police Station'?'🚔':x.type==='Fire Station'?'🚒':'🏥';L.marker([x.lat,x.lng]).addTo(rmap).bindPopup('<b>'+icon+' '+x.name+'</b><br>'+x.type+(x.phone?'<br>Phone: '+x.phone:''));});
+function list(id,arr,empty){document.getElementById(id).innerHTML=arr.slice(0,5).map(x=>'<div class="nearby-item"><b>'+x.name+'</b><span>'+x.type+(x.phone?' • '+x.phone:'')+'</span></div>').join('')||'<p class="tiny">'+empty+'</p>';}
+list('nearbyPolice',police,'No nearby police/fire result was returned.');list('nearbyMedical',medical,'No nearby hospital/clinic result was returned.');
+if(services.length){rmap.fitBounds([[resultLat,resultLng],...services.map(x=>[x.lat,x.lng])],{padding:[30,30],maxZoom:14});}}).catch(()=>{document.getElementById('nearbyPolice').innerHTML='<p class="tiny">Nearby lookup is temporarily unavailable.</p>';document.getElementById('nearbyMedical').innerHTML='<p class="tiny">Nearby lookup is temporarily unavailable.</p>';});
+{% endif %}
+</script>
+<script>
+const stateCities={{state_cities|tojson}}; const cityToState={{city_to_state|tojson}};
+const stateSelect=document.getElementById('state'), cityInput=document.getElementById('city'), cityList=document.getElementById('cityList');
+function refreshCities(){const st=stateSelect.value; const list=st?(stateCities[st]||[]):Object.keys(cityToState); cityList.innerHTML=list.map(c=>'<option value="'+c+'">').join('');}
+stateSelect.addEventListener('change',()=>{refreshCities(); cityInput.value=''; document.getElementById('district').value='';});
+cityInput.addEventListener('change',()=>{if(cityToState[cityInput.value]) stateSelect.value=cityToState[cityInput.value];});
+refreshCities();
+</script>
+<script>
+const assistantContext={risk:{{ risk_level|default('', true)|tojson }},area:{{ area|default('', true)|tojson }},city:{{ city|default('', true)|tojson }}};
+function addChat(text,who){const log=document.getElementById('chatLog');const d=document.createElement('div');d.className='chat '+who;d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+async function askAI(text){const input=document.getElementById('aiMessage');text=(text||input.value||'').trim();if(!text)return;addChat(text,'user');input.value='';addChat('Thinking…','bot');const last=document.querySelector('#chatLog .bot:last-child');try{const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...assistantContext,message:text})});const j=await r.json();last.textContent=j.reply||'Please try again.';}catch(e){last.textContent='Assistant is temporarily unavailable. Please use the Emergency page for official help.';}}
+function sosConfirm(){if(confirm('If you are in immediate danger, call 112. Continue to open the emergency call?')) window.location.href='tel:112';}
+function getMyLocation(){if(!navigator.geolocation){alert('Location is not supported by this browser.');return;}navigator.geolocation.getCurrentPosition(p=>alert('Your browser location was found. Latitude: '+p.coords.latitude.toFixed(5)+' | Longitude: '+p.coords.longitude.toFixed(5)),()=>alert('Please allow location permission in Chrome.'));}
+async function shareSafetyPlan(){const text='WomenSafe AI Safety Plan: Keep 112 ready, use well-lit populated routes, share your travel plan with a trusted contact, and verify official emergency information.';if(navigator.share){try{await navigator.share({title:'WomenSafe AI Safety Plan',text});}catch(e){}}else{try{await navigator.clipboard.writeText(text);alert('Safety plan copied to clipboard.');}catch(e){alert(text);}}}
+</script>
+<script>
+async function loadTimeRisk(){
+ const grid=document.getElementById('timeRiskGrid'); const peak=document.getElementById('peakTimeBox'); if(!grid||!peak)return;
+ const area={{ area|default('', true)|tojson }}; const city={{ city|default('', true)|tojson }}; const nr={{ night_crime_rate|default(0, true) }};
+ try{const r=await fetch('/api/time-risk?area='+encodeURIComponent(area)+'&city='+encodeURIComponent(city)+'&night_rate='+encodeURIComponent(nr)); const d=await r.json();
+ peak.innerHTML='⚠️ <b>Highest demo-risk window:</b> '+d.peak_time+' <span>'+d.peak_risk+' ('+d.peak_percent+'%)</span>';
+ grid.innerHTML=d.bands.map(x=>'<div class="time-risk-item"><b>'+x.time+'</b><span class="time-'+x.risk.toLowerCase()+'">'+x.risk+'</span><div class="time-bar"><i style="width:'+x.risk_percent+'%"></i></div></div>').join('');
+ }catch(e){peak.textContent='Time-of-day analysis is temporarily unavailable.';}
+}
+loadTimeRisk();
+</script>
+<script>
+const revealObserver=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.08});
+document.querySelectorAll('.how-card,.feature,.assistant-card,.action-card,.report-card,.location-details-card,.time-risk-card,.location-panel').forEach(el=>{el.classList.add('reveal');revealObserver.observe(el)});
+</script>
+</body></html>

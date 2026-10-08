@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Login | WomenSafe AI</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+<nav class="navbar"><a class="brand" href="/">🛡️ WomenSafe AI</a></nav>
+<main class="login-wrap"><div class="login-card"><span class="badge">ADMIN ACCESS</span><h1>Admin Login</h1><p>Demo dashboard for the academic project.</p>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<form method="POST"><label>Email</label><input name="email" type="email" placeholder="admin@womensafe.ai" required><label>Password</label><input name="password" type="password" placeholder="admin123" required><button type="submit">Login</button></form>
+<div class="demo-box"><b>Demo credentials</b><br>Email: admin@womensafe.ai<br>Password: admin123</div></div></main></body></html>
